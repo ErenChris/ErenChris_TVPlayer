@@ -8,18 +8,24 @@ import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 
+import java.net.InetAddress;
+import java.net.URISyntaxException;
+
 public class MainActivity extends Activity implements View.OnClickListener, SurfaceHolder.Callback {
     MediaPlayer TVPlayer = null;
+    boolean PingFlag = true;
     public SurfaceView sfv_show;
     public SurfaceHolder surfaceHolder;
     public Button btn_start;
     public Button btn_pause;
     public Button btn_stop;
+    public Uri uri= null;
 
     public void bindViews() {
         sfv_show = (SurfaceView) findViewById(R.id.sfv_show);
@@ -57,12 +63,18 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        uri = Uri.parse("http://39.135.47.100:6610/000000001000/HD-8000k-1080P-cctv6/1.m3u8?IASHttpSessionId=OTT");
         bindViews();
     }
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        TVPlayer = MediaPlayer.create(this, Uri.parse("http://39.134.65.177/PLTV/88888888/224/3221225812/1.m3u8"));
+        PingFlag = ping(uri.toString(),100);
+        if(!PingFlag)
+        {
+            Log.e("Error","PingFalse");
+        }
+        TVPlayer = MediaPlayer.create(this, uri);
         TVPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         TVPlayer.setDisplay(surfaceHolder);    //设置显示视频显示在SurfaceView上
     }
@@ -84,5 +96,14 @@ public class MainActivity extends Activity implements View.OnClickListener, Surf
             TVPlayer.stop();
         }
         TVPlayer.release();
+    }
+
+    public static boolean ping(String ip, int timeout) {
+        try {
+            boolean reachable = InetAddress.getByName(ip).isReachable(timeout);
+            return reachable; // 当返回值是true时，说明host是可用的，false则不可。
+        } catch (Exception ex) {
+            return false;
+        }
     }
 }
